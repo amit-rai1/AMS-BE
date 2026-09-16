@@ -11,7 +11,13 @@ import attendanceRoutes from './routes/attendance.js';
 import reportRoutes from './routes/reports.js';
 
 const app = express();
-app.use(cors());
+const requiredEnv = ['MONGO_URI', 'JWT_SECRET'];
+const missingEnv = requiredEnv.filter((key) => !process.env[key]);
+if (missingEnv.length) {
+  throw new Error(`Missing required environment variable(s): ${missingEnv.join(', ')}`);
+}
+const allowedOrigins = (process.env.CLIENT_ORIGIN || '').split(',').map((origin) => origin.trim()).filter(Boolean);
+app.use(cors({ origin: allowedOrigins.length ? allowedOrigins : false }));
 app.use(express.json());
 app.use(morgan('dev'));
 app.get('/api/health', (req, res) => res.json({ status: 'ok', service: 'attendance-api' }));
@@ -25,7 +31,7 @@ app.use((err, req, res, next) => {
 });
 
 const port = process.env.PORT || 5000;
-const mongoUri = process.env.MONGO_URI || 'mongodb+srv://raiamit9264_db_user:SKEYDOfB7F7M2Wvh@cluster0.94ohlo0.mongodb.net/';
+const mongoUri = process.env.MONGO_URI;
 mongoose.connect(mongoUri)
   .then(() => {
     console.log('MongoDB connected successfully');

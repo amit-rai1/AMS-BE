@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 import { User } from '../models/index.js';
 
 const router = Router();
-const tokenFor = (user) => jwt.sign({ id: user._id, name: user.name, role: user.role }, process.env.JWT_SECRET || 'dev_secret', { expiresIn: '1d' });
+const tokenFor = (user) => jwt.sign({ id: user._id, name: user.name, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
 router.post('/login', async (req, res, next) => {
   try {
     const { email, password } = req.body;
