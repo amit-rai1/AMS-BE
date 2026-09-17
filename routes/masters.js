@@ -66,7 +66,13 @@ for (const { path, model, populate } of resources) {
       : path === 'subjects'
         ? [{ name: new RegExp(req.query.search, 'i') }, { code: new RegExp(req.query.search, 'i') }, { facultyName: new RegExp(req.query.search, 'i') }, { batchName: new RegExp(req.query.search, 'i') }]
         : [{ name: new RegExp(req.query.search, 'i') }];
-    const query = model.find(filter).sort({ createdAt: -1 }); if (populate) query.populate(populate);
+    const sort = {
+      years: { name: 1, createdAt: 1 },
+      semesters: { yearId: 1, name: 1, createdAt: 1 },
+      subjects: { yearId: 1, semesterId: 1, type: -1, code: 1, batchName: 1, createdAt: 1 },
+      students: { yearId: 1, semesterId: 1, crNo: 1, createdAt: 1 }
+    }[path];
+    const query = model.find(filter).collation({ locale: 'en', numericOrdering: true }).sort(sort); if (populate) query.populate(populate);
     if (!req.query.page) return res.json(await query);
     const page = Math.max(Number.parseInt(req.query.page, 10) || 1, 1);
     const pageSize = Math.min(Math.max(Number.parseInt(req.query.pageSize, 10) || 10, 1), 100);
