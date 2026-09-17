@@ -10,6 +10,7 @@ import masterRoutes from './routes/masters.js';
 import attendanceRoutes from './routes/attendance.js';
 import reportRoutes from './routes/reports.js';
 import facultyRoutes from './routes/faculty.js';
+import leaveRoutes from './routes/leaves.js';
 
 const app = express();
 const requiredEnv = ['MONGO_URI', 'JWT_SECRET'];
@@ -29,6 +30,7 @@ app.use(morgan('dev'));
 app.get('/api/health', (req, res) => res.json({ status: 'ok', service: 'attendance-api' }));
 app.use('/api/auth', authRoutes);
 app.use('/api/faculty', facultyRoutes);
+app.use('/api/leaves', leaveRoutes);
 app.use('/api', masterRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/reports', reportRoutes);

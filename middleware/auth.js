@@ -7,6 +7,10 @@ export function auth(req, res, next) {
   catch { return res.status(401).json({ message: 'Invalid or expired token' }); }
 }
 export function adminOnly(req, res, next) {
-  if (req.user?.role !== 'admin') return res.status(403).json({ message: 'Admin access required' });
+  if (!['admin', 'hod'].includes(req.user?.role)) return res.status(403).json({ message: 'Admin or HOD access required' });
+  next();
+}
+export function facultyOnly(req, res, next) {
+  if (req.user?.role !== 'faculty') return res.status(403).json({ message: 'Faculty access required' });
   next();
 }

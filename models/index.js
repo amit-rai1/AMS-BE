@@ -5,7 +5,7 @@ const status = { type: String, enum: ['Active', 'Inactive'], default: 'Active' }
 
 export const User = mongoose.model('User', new Schema({
   name: { type: String, required: true }, email: { type: String, required: true, unique: true, lowercase: true },
-  password: { type: String, required: true }, role: { type: String, enum: ['admin', 'faculty'], default: 'faculty' }, status
+  password: { type: String, required: true }, role: { type: String, enum: ['admin', 'hod', 'faculty'], default: 'faculty' }, status
 }, { timestamps: true }));
 export const Year = mongoose.model('Year', new Schema({ name: { type: String, required: true, unique: true, trim: true }, status }, { timestamps: true }));
 export const Semester = mongoose.model('Semester', new Schema({ name: { type: String, required: true }, yearId: { type: Schema.Types.ObjectId, ref: 'Year', required: true }, status }, { timestamps: true }));
@@ -27,3 +27,11 @@ export const Attendance = mongoose.model('Attendance', new Schema({
   date: { type: Date, required: true }, status: { type: String, enum: ['Present', 'Absent'], required: true }, remarks: { type: String, default: '' }
 }, { timestamps: true }));
 Attendance.schema.index({ studentId: 1, subjectId: 1, date: 1 }, { unique: true });
+export const Leave = mongoose.model('Leave', new Schema({
+  applicantId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  startDate: { type: Date, required: true }, endDate: { type: Date, required: true },
+  leaveType: { type: String, enum: ['Casual', 'Medical', 'Emergency', 'Other'], default: 'Casual' },
+  reason: { type: String, required: true, trim: true }, recipientEmail: { type: String, trim: true },
+  status: { type: String, enum: ['Pending', 'Approved', 'Rejected'], default: 'Pending' },
+  reviewedBy: { type: Schema.Types.ObjectId, ref: 'User' }, reviewedAt: Date, reviewComment: { type: String, default: '' }
+}, { timestamps: true }));
