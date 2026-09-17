@@ -8,7 +8,7 @@ const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 const normalizePayload = (body) => {
   const payload = { ...body };
-  for (const key of ['yearId', 'semesterId']) {
+  for (const key of ['yearId', 'semesterId', 'facultyId']) {
     if (payload[key] && typeof payload[key] === 'object') payload[key] = payload[key]._id || payload[key].id;
   }
   delete payload._id;
@@ -18,7 +18,7 @@ const normalizePayload = (body) => {
 };
 const resources = [
   { path: 'years', model: Year, populate: '' }, { path: 'semesters', model: Semester, populate: 'yearId' },
-  { path: 'subjects', model: Subject, populate: 'yearId semesterId' }, { path: 'students', model: Student, populate: 'yearId semesterId' }
+  { path: 'subjects', model: Subject, populate: 'yearId semesterId facultyId' }, { path: 'students', model: Student, populate: 'yearId semesterId' }
 ];
 router.use(auth);
 router.post('/students/import', upload.single('file'), async (req, res, next) => {
@@ -61,6 +61,8 @@ for (const { path, model, populate } of resources) {
     if (req.query.batchName) filter.batchName = req.query.batchName;
     if (req.query.courseName) filter.courseName = req.query.courseName;
     if (req.query.type) filter.type = req.query.type;
+    if (path === 'subjects' && req.user.role === 'faculty') filter.facultyId = req.user.id;
+    if (path === 'subjects' && req.query.facultyId && req.user.role === 'admin') filter.facultyId = req.query.facultyId;
     if (req.query.search) filter.$or = path === 'students'
       ? [{ name: new RegExp(req.query.search, 'i') }, { crNo: new RegExp(req.query.search, 'i') }]
       : path === 'subjects'
@@ -80,8 +82,9 @@ for (const { path, model, populate } of resources) {
     res.json({ items, total, page, pageSize, totalPages: Math.max(Math.ceil(total / pageSize), 1) });
   } catch (error) { next(error); } });
   router.get(`/${path}/:id`, async (req, res, next) => { try { const item = await model.findById(req.params.id).populate(populate); if (!item) return res.status(404).json({ message: 'Record not found' }); res.json(item); } catch (error) { next(error); } });
-  router.post(`/${path}`, async (req, res, next) => { try { res.status(201).json(await model.create(normalizePayload(req.body))); } catch (error) { next(error); } });
-  router.put(`/${path}/:id`, async (req, res, next) => { try { const item = await model.findByIdAndUpdate(req.params.id, normalizePayload(req.body), { new: true, runValidators: true }).populate(populate); res.json(item); } catch (error) { next(error); } });
-  router.delete(`/${path}/:id`, adminOnly, async (req, res, next) => { try { await model.findByIdAndDelete(req.params.id); res.json({ message: 'Deleted successfully' }); } catch (error) { next(error); } });
+  const manageAccess = path === 'students' ? auth : adminOnly;
+  router.post(`/${path}`, manageAccess, async (req, res, next) => { try { res.status(201).json(await model.create(normalizePayload(req.body))); } catch (error) { next(error); } });
+  router.put(`/${path}/:id`, manageAccess, async (req, res, next) => { try { const item = await model.findByIdAndUpdate(req.params.id, normalizePayload(req.body), { new: true, runValidators: true }).populate(populate); res.json(item); } catch (error) { next(error); } });
+  router.delete(`/${path}/:id`, path === 'students' ? auth : adminOnly, async (req, res, next) => { try { await model.findByIdAndDelete(req.params.id); res.json({ message: 'Deleted successfully' }); } catch (error) { next(error); } });
 }
 export default router;
