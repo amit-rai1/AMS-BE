@@ -31,8 +31,7 @@ app.use((err, req, res, next) => {
 });
 
 const port = process.env.PORT || 5000;
-const mongoUri = process.env.MONGO_URI;
-mongoose.connect(mongoUri)
+mongoose.connect(process.env.MONGO_URI)
   .then(() => {
     console.log('MongoDB connected successfully');
     app.listen(port, () => {

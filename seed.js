@@ -4,8 +4,12 @@ import bcrypt from 'bcryptjs';
 import { User, Year, Semester, Subject, Student } from './models/index.js';
 
 await mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/attendance_management');
-await Promise.all([User.deleteMany({}), Year.deleteMany({}), Semester.deleteMany({}), Subject.deleteMany({}), Student.deleteMany({})]);
-await User.create({ name: 'Admin User', email: 'admin@attendly.edu', password: await bcrypt.hash('admin123', 10), role: 'admin' });
+await Promise.all([Year.deleteMany({}), Semester.deleteMany({}), Subject.deleteMany({}), Student.deleteMany({})]);
+await User.updateOne(
+  { email: 'admin@attendly.edu' },
+  { $setOnInsert: { name: 'Admin User', email: 'admin@attendly.edu', password: await bcrypt.hash('admin123', 10), role: 'admin' } },
+  { upsert: true }
+);
 const years = await Year.insertMany(['1st Year', '2nd Year', '3rd Year'].map((name) => ({ name })));
 const semesterNames = ['1st Semester', '2nd Semester', '3rd Semester', '4th Semester', '5th Semester', '6th Semester'];
 const semesters = await Semester.insertMany(semesterNames.map((name, index) => ({ name, yearId: years[Math.floor(index / 2)]._id })));
